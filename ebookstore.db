@@ -1,0 +1,235 @@
+import sqlite3
+import shelf_task
+
+
+# Connecting to the database
+
+conn = sqlite3.connect("ebookstore.db")
+cursor = conn.cursor()
+
+
+# Creating the book table
+
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS book (
+    book_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    authorID INTEGER NOT NULL,
+    qty INTEGER NOT NULL
+)
+""")
+
+
+# Inserting data if table is empty
+
+cursor.execute("SELECT COUNT(*) FROM book")
+count = cursor.fetchone()[0]
+
+if count == 0:
+    books = [
+        (3001, "A Tale of Two Cities", 1290, 30),
+        (3002, "Harry Potter and the Philosopher's Stone", 8937, 40),
+        (3003, "The Lion, the Witch and the Wardrobe", 2356, 25),
+        (3004, "The Lord of the Rings", 6380, 37),
+        (3005, "Alice's Adventures in Wonderland", 5620, 12)
+    ]
+
+    cursor.executemany(
+        "INSERT INTO book VALUES (is, title, authorID, qty)",
+        books
+    )
+    conn.commit()
+
+
+# Enter Book, this includes ID, title, authorID and qty
+
+def enter_book():
+    try:
+        title = input("Enter Book Title: ")
+        authorID = int(input("Enter Author ID: "))
+        qty = int(input("Enter Quantity: "))
+
+       cursor.execute("SELECT * FROM books)
+
+       for row in cursor.fetchall():
+           print(row)
+        )
+
+        conn.commit()
+        print("Book successfully added.\n")
+
+    except sqlite3.IntegrityError:
+        print("Book ID already exists.\n")
+
+
+# Update Book
+
+def update_book():
+    id = int(input("Enter Book ID to update: "))
+
+    cursor.execute("SELECT * FROM book WHERE id=?", (id,))
+    book = cursor.fetchone()
+
+    if book is None:
+        print("Book not found.\n")
+        return
+
+    print("\nUpdate Options")
+    print("1. Quantity")
+    print("2. Title")
+    print("3. Author ID")
+
+    choice = input("Choose option: ")
+
+    if choice == "1":
+        qty = int(input("Enter new quantity: "))
+        cursor.execute(
+            "UPDATE book SET qty=? WHERE id=?",
+            (qty, id)
+        )
+
+    elif choice == "2":
+        title = input("Enter new title: ")
+        cursor.execute(
+            "UPDATE book SET title=? WHERE id=?",
+            (title, id)
+        )
+
+    elif choice == "3":
+        authorID = int(input("Enter new Author ID: "))
+        cursor.execute(
+            "UPDATE book SET authorID=? WHERE id=?",
+            (authorID, id)
+        )
+
+    else:
+        print("Invalid option.\n")
+        return
+
+    conn.commit()
+    print("Book updated successfully.\n")
+
+
+# Deleting a Book
+
+def delete_book():
+    id = int(input("Enter Book ID to delete: "))
+
+    cursor.execute("SELECT * FROM book WHERE id=?", (id,))
+    book = cursor.fetchone()
+
+    if book is None:
+        print("Book not found.\n")
+        return
+
+    cursor.execute("DELETE FROM book WHERE id=?", (id,))
+    conn.commit()
+
+    print("Book deleted successfully.\n")
+
+
+# Search for a Book
+
+def search_book():
+    title = input("Enter book title: ")
+
+    cursor.execute(
+        "SELECT * FROM book WHERE title LIKE ?",
+        ('%' + title + '%',)
+    )
+
+    books = cursor.fetchall()
+
+    if books:
+        print("\nSearch Results")
+        print("-" * 60)
+
+        for book in books:
+            print(f"ID: {book[0]}")
+            print(f"Title: {book[1]}")
+            print(f"Author ID: {book[2]}")
+            print(f"Quantity: {book[3]}")
+            print("-" * 60)
+
+    else:
+        print("No books found.\n")
+
+
+# Displaying All Books
+
+def display_books():
+    cursor.execute("SELECT * FROM book")
+
+    books = cursor.fetchall()
+
+    print("\nCurrent Book Inventory")
+    print("-" * 70)
+
+    for book in books:
+        print(book)
+
+    print()
+
+# Creating an author table
+    cursor.execute("""
+CREATE TABLE IF NOT EXISTS author(
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    country TEXT NOT NULL
+)
+""")
+
+# Populating the author table
+
+authors = [
+    (1290, "Charles Dickens", "England"),
+    (8937, "J.K. Rowling", "England"),
+    (2356, "C.S. Lewis", "Ireland"),
+    (6380, "J.R.R. Tolkien", "South Africa"),
+    (5620, "Lewis Carroll", "England")
+]
+
+cursor.executemany(
+    "INSERT OR IGNORE INTO author VALUES (?, ?, ?)",
+    authors
+)
+
+conn.commit()
+
+# Displaying book details using an INNER JOIN
+
+cursor.execute("""
+SELECT
+    book.title,
+    author.name,
+    author.country
+FROM book
+INNER JOIN author
+ON book.authorID = author.id
+""")
+
+rows = cursor.fetchall()
+
+# Display using zip()
+titles = []
+authors = []
+countries = []
+
+for row in rows:
+    titles.append(row[0])
+    authors.append(row[1])
+    countries.append(row[2])
+
+print("\nDetails")
+print("-" * 50)
+
+for title, author, country in zip(titles, authors, countries):
+    print(f"Title: {title}")
+    print(f"Author's Name: {author}")
+    print(f"Author's Country: {country}")
+    print("-" * 50)
+
+conn.close()
+
+
+
